@@ -1,5 +1,6 @@
 import { User } from "../models/user.model.js";
 import bcrypt from "bcryptjs";
+import { generateVerificationToken } from "../utils/generateVerificationToken.js";
 export const signup = async (req, res) => {
     const {email, password, name} = req.body;
     try {
@@ -18,6 +19,20 @@ export const signup = async (req, res) => {
         // bcrypt.hash(明文密码, 加密强度)
         const hashedPassword = await bcrypt.hash(password, 10);
         
+        const verificationToken = generateVerificationToken();
+        
+        const user = new User({
+            email,
+            password: hashedPassword,
+            name,
+            verificationToken: verificationToken,
+            verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours 
+        });
+
+        await user.save();
+
+        // jwt 
+        generateTokenAndSetCookie(res.user_id)
     } catch (err) {
         res.status(400).json({
             success: false,
