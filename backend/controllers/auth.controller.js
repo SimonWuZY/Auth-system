@@ -1,6 +1,7 @@
 import { User } from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import { generateVerificationToken } from "../utils/generateVerificationToken.js";
+import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie.js";
 export const signup = async (req, res) => {
     const {email, password, name} = req.body;
     try {
@@ -32,7 +33,9 @@ export const signup = async (req, res) => {
         await user.save();
 
         // jwt 鉴权
-        generateTokenAndSetCookie(res, res.user_id);
+        console.log(process.env.JWT_SECRET);
+        
+        generateTokenAndSetCookie(res, user._id);
 
         res.status(201).json({
             success: true,
