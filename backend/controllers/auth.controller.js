@@ -32,9 +32,7 @@ export const signup = async (req, res) => {
 
         await user.save();
 
-        // jwt 鉴权
-        console.log(process.env.JWT_SECRET);
-        
+        // jwt 鉴权        
         generateTokenAndSetCookie(res, user._id);
 
         res.status(201).json({
