@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { generateVerificationToken } from "../utils/generateVerificationToken.js";
 import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie.js";
 import { sendVerificationEmail } from "../mailtrap/emails.js";
+
 export const signup = async (req, res) => {
     const {email, password, name} = req.body;
     try {
@@ -52,6 +53,37 @@ export const signup = async (req, res) => {
             success: false,
             message: err.message,
         })
+    }
+}
+
+export const verifyEmail = async (req, res) => {
+    const { code } = req.body;
+    try{
+        const user = await User.findOne({
+            verificationToken: code,
+            verificationTokenExpiresAt: { $gt: Date.now() }, // 检查令牌是否过期
+        });
+
+        if(!user){
+            return res.status(400).json({
+                success: false,
+                message: "Invalid or expired verification code",
+            });
+        }
+        
+        user.isVerified = true;
+        user.verificationToken = undefined; // 清除令牌
+        user.verificationTokenExpiresAt = undefined; // 清除令牌过期时间
+        // 更新数据库
+        await user.save();
+
+        await sendWelcomeEmail(user.email, user.name); // 发送欢迎邮件
+    }
+    catch (err) { 
+        return res.status(400).json({
+            success: false,
+            message: "Invalid verification code",
+        });
     }
 }
 
